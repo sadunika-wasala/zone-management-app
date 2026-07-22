@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, Edit2, ShieldAlert, Check, X } from 'lucide-react';
+import { API_BASE_URL } from '../api'; // Adjust relative import path if needed
 
 const Employees = () => {
   const { user, isZonalManager } = useAuth();
@@ -35,7 +36,7 @@ const Employees = () => {
 
   const fetchEmployees = async () => {
     try {
-      const res = await fetch('/api/employees', { headers });
+      const res = await fetch(`${API_BASE_URL}/api/employees`, { headers });
       const data = await res.json();
       if (res.ok) {
         setEmployees(data);
@@ -129,7 +130,7 @@ const Employees = () => {
     }
 
     try {
-      const url = editingEmployee ? `/api/employees/${editingEmployee._id}` : '/api/employees';
+      const url = editingEmployee ? `${API_BASE_URL}/api/employees/${editingEmployee._id}` : `${API_BASE_URL}/api/employees`;
       const method = editingEmployee ? 'PUT' : 'POST';
 
       const res = await fetch(url, {

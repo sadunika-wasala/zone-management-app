@@ -10,6 +10,7 @@ import {
   User,
   Activity
 } from 'lucide-react';
+import { API_BASE_URL } from '../api'; // Adjust relative import path if needed
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -32,19 +33,19 @@ const Dashboard = () => {
         };
 
         // 1. Fetch Customers
-        const custRes = await fetch('/api/customers', { headers });
+        const custRes = await fetch(`${API_BASE_URL}/api/customers`, { headers });
         const customers = await custRes.json();
 
         // 2. Fetch Employees
-        const empRes = await fetch('/api/employees', { headers });
+        const empRes = await fetch(`${API_BASE_URL}/api/employees`, { headers });
         const employees = await empRes.json();
 
         // 3. Fetch Tasks
-        const taskRes = await fetch('/api/tasks', { headers });
+        const taskRes = await fetch(`${API_BASE_URL}/api/tasks`, { headers });
         const tasksData = await taskRes.json();
 
         // 4. Fetch Hierarchy Tree
-        const treeRes = await fetch('/api/employees/hierarchy/tree', { headers });
+        const treeRes = await fetch(`${API_BASE_URL}/api/employees/hierarchy/tree`, { headers });
         const treeData = await treeRes.json();
 
         // Calculate statistics

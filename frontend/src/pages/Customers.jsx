@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { API_BASE_URL } from '../api'; // Adjust relative import path if needed
 
 const Customers = () => {
   const { user, isZonalManager } = useAuth();
@@ -30,7 +31,7 @@ const Customers = () => {
   const fetchData = async () => {
     try {
       // Fetch customers (scoped to hierarchy on server)
-      const custRes = await fetch('/api/customers', { headers });
+      const custRes = await fetch(`${API_BASE_URL}/api/customers`, { headers });
       const custData = await custRes.json();
       if (custRes.ok) {
         setCustomers(custData);
@@ -38,7 +39,7 @@ const Customers = () => {
 
       // Fetch advisors for dropdown selection (only needed for managers/leaders)
       if (user.position !== 'Advisor') {
-        const empRes = await fetch('/api/employees', { headers });
+        const empRes = await fetch(`${API_BASE_URL}/api/employees`, { headers });
         const empData = await empRes.json();
         if (empRes.ok) {
           // Filter only active advisors
@@ -102,7 +103,7 @@ const Customers = () => {
     }
 
     try {
-      const url = editingCustomer ? `/api/customers/${editingCustomer._id}` : '/api/customers';
+      const url = editingCustomer ? `${API_BASE_URL}/api/customers/${editingCustomer._id}` : `${API_BASE_URL}/api/customers`;
       const method = editingCustomer ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -131,7 +132,7 @@ const Customers = () => {
     }
 
     try {
-      const res = await fetch(`/api/customers/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/customers/${id}`, {
         method: 'DELETE',
         headers,
       });

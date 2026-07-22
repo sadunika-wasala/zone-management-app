@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Edit2, Trash2, Calendar, User, ArrowRight, X } from 'lucide-react';
+import { API_BASE_URL } from '../api'; // Adjust relative import path if needed
 
 const Tasks = () => {
   const { user, isZonalManager } = useAuth();
@@ -31,7 +32,7 @@ const Tasks = () => {
   const fetchData = async () => {
     try {
       // Fetch tasks (scoped on server)
-      const tasksRes = await fetch('/api/tasks', { headers });
+      const tasksRes = await fetch(`${API_BASE_URL}/api/tasks`, { headers });
       const tasksData = await tasksRes.json();
       if (tasksRes.ok) {
         setTasks(tasksData);
@@ -39,7 +40,7 @@ const Tasks = () => {
 
       // Fetch employees for dropdown (only Zonal Manager can assign tasks)
       if (isZonalManager) {
-        const empRes = await fetch('/api/employees', { headers });
+        const empRes = await fetch(`${API_BASE_URL}/api/employees`, { headers });
         const empData = await empRes.json();
         if (empRes.ok) {
           // Filter only active employees
@@ -107,7 +108,7 @@ const Tasks = () => {
     };
 
     try {
-      const url = editingTask ? `/api/tasks/${editingTask._id}` : '/api/tasks';
+      const url = editingTask ? `${API_BASE_URL}/api/tasks/${editingTask._id}` : `${API_BASE_URL}/api/tasks`;
       const method = editingTask ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -134,7 +135,7 @@ const Tasks = () => {
     if (!window.confirm('Delete this task?')) return;
 
     try {
-      const res = await fetch(`/api/tasks/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
         method: 'DELETE',
         headers,
       });
@@ -178,7 +179,7 @@ const Tasks = () => {
     setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
 
     try {
-      const res = await fetch(`/api/tasks/${taskId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ status: newStatus }),
@@ -211,7 +212,7 @@ const Tasks = () => {
     setTasks(prev => prev.map(t => t._id === task._id ? { ...t, status: nextStatus } : t));
 
     try {
-      const res = await fetch(`/api/tasks/${task._id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/tasks/${task._id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ status: nextStatus }),
