@@ -1,4 +1,4 @@
-# AIA Insurance - Zonal Zonal Management System
+# AIA Insurance - Cluster 4 Zone Management System
 
 A web application designed for the AIA Insurance Zonal Manager in Sri Lanka. This portal facilitates managing employee hierarchies, customer policies, and task assignments via a DevOps-style Kanban board.
 

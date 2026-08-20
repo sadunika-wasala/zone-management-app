@@ -23,6 +23,17 @@ const customerSchema = new mongoose.Schema(
       required: [true, 'Policy amount is required'],
       min: [0, 'Policy amount cannot be negative'],
     },
+    policyStartDate: {
+      type: Date,
+    },
+    policyType: {
+      type: String,
+      enum: ['Health Plan', 'Retirement Plan', 'Education Plan'],
+    },
+    paymentFrequency: {
+      type: String,
+      enum: ['Monthly', 'Quarterly', 'Yearly'],
+    },
     assignedAdvisor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Employee',

@@ -33,7 +33,7 @@ const DashboardLayout = () => {
   return (
     <div className="app-container">
       <div className="mobile-header">
-        <span className="logo-text">AIA Zonal</span>
+        <span className="logo-text">AIA Cluster 4 Zone</span>
         <button className="btn-icon" onClick={toggleSidebar} style={{ color: 'var(--text-primary)', background: 'transparent', border: 'none' }}>
           <Menu size={24} />
         </button>

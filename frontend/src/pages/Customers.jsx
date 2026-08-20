@@ -21,7 +21,15 @@ const Customers = () => {
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [policyAmount, setPolicyAmount] = useState('');
+  const [policyStartDate, setPolicyStartDate] = useState('');
+  const [policyType, setPolicyType] = useState('Health Plan');
+  const [paymentFrequency, setPaymentFrequency] = useState('Monthly');
   const [assignedAdvisor, setAssignedAdvisor] = useState('');
+
+  // Filtering State
+  const [filterPolicyType, setFilterPolicyType] = useState('');
+  const [filterPaymentFrequency, setFilterPaymentFrequency] = useState('');
+  const [filterRegistrationMonth, setFilterRegistrationMonth] = useState('');
 
   const headers = {
     'Authorization': `Bearer ${user.token}`,
@@ -66,6 +74,9 @@ const Customers = () => {
     setName('');
     setAddress('');
     setPolicyAmount('');
+    setPolicyStartDate(new Date().toISOString().split('T')[0]);
+    setPolicyType('Health Plan');
+    setPaymentFrequency('Monthly');
     setAssignedAdvisor(user.position === 'Advisor' ? user._id : '');
     setError('');
     setSuccess('');
@@ -78,6 +89,9 @@ const Customers = () => {
     setName(cust.name);
     setAddress(cust.address);
     setPolicyAmount(cust.policyAmount);
+    setPolicyStartDate(cust.policyStartDate ? new Date(cust.policyStartDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    setPolicyType(cust.policyType || 'Health Plan');
+    setPaymentFrequency(cust.paymentFrequency || 'Monthly');
     setAssignedAdvisor(cust.assignedAdvisor?._id || cust.assignedAdvisor || '');
     setError('');
     setSuccess('');
@@ -94,6 +108,9 @@ const Customers = () => {
       name,
       address,
       policyAmount: parseFloat(policyAmount),
+      policyStartDate,
+      policyType,
+      paymentFrequency,
       assignedAdvisor: user.position === 'Advisor' ? user._id : assignedAdvisor,
     };
 
@@ -115,14 +132,19 @@ const Customers = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setSuccess(editingCustomer ? 'Customer policy updated!' : 'Customer policy registered!');
+        const msg = editingCustomer ? 'Customer policy updated successfully!' : 'Customer policy registered successfully!';
+        setSuccess(msg);
+        alert(msg); // Give clear browser alert as requested
         fetchData();
-        setTimeout(() => setModalOpen(false), 1200);
+        setModalOpen(false); // Close immediately on success
       } else {
-        setError(data.message || 'Action failed');
+        const errMsg = data.message || 'Action failed';
+        setError(errMsg);
+        alert(`Error: ${errMsg}`); // Show error clearly
       }
     } catch (err) {
       setError('Network error. Please try again.');
+      alert('Network error. Please try again.');
     }
   };
 
@@ -156,6 +178,25 @@ const Customers = () => {
     }).format(amount);
   };
 
+  const filteredCustomers = customers.filter(cust => {
+    let matchType = true;
+    let matchPayment = true;
+    let matchMonth = true;
+
+    if (filterPolicyType) {
+      matchType = cust.policyType === filterPolicyType;
+    }
+    if (filterPaymentFrequency) {
+      matchPayment = cust.paymentFrequency === filterPaymentFrequency;
+    }
+    if (filterRegistrationMonth) {
+      const custDate = new Date(cust.createdAt);
+      const custMonthStr = `${custDate.getFullYear()}-${String(custDate.getMonth() + 1).padStart(2, '0')}`;
+      matchMonth = custMonthStr === filterRegistrationMonth;
+    }
+    return matchType && matchPayment && matchMonth;
+  });
+
   return (
     <div>
       <div className="header-action">
@@ -169,6 +210,48 @@ const Customers = () => {
         </button>
       </div>
 
+      <div className="filters-container glass-panel" style={{ display: 'flex', gap: '1rem', padding: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Policy Type:</label>
+          <select value={filterPolicyType} onChange={e => setFilterPolicyType(e.target.value)} style={{ padding: '0.4rem', borderRadius: '4px', minWidth: '150px' }}>
+            <option value="">All Types</option>
+            <option value="Health Plan">Health Plan</option>
+            <option value="Retirement Plan">Retirement Plan</option>
+            <option value="Education Plan">Education Plan</option>
+          </select>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Payment Freq:</label>
+          <select value={filterPaymentFrequency} onChange={e => setFilterPaymentFrequency(e.target.value)} style={{ padding: '0.4rem', borderRadius: '4px', minWidth: '150px' }}>
+            <option value="">All Frequencies</option>
+            <option value="Monthly">Monthly</option>
+            <option value="Quarterly">Quarterly</option>
+            <option value="Yearly">Yearly</option>
+          </select>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Reg. Month:</label>
+          <input 
+            type="month" 
+            value={filterRegistrationMonth} 
+            onChange={e => setFilterRegistrationMonth(e.target.value)}
+            style={{ padding: '0.4rem', borderRadius: '4px' }}
+          />
+        </div>
+
+        {(filterPolicyType || filterPaymentFrequency || filterRegistrationMonth) && (
+          <button 
+            className="btn btn-secondary" 
+            onClick={() => { setFilterPolicyType(''); setFilterPaymentFrequency(''); setFilterRegistrationMonth(''); }}
+            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+          >
+            Clear
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <p style={{ marginTop: '2rem' }}>Loading customers...</p>
       ) : (
@@ -176,9 +259,10 @@ const Customers = () => {
           <table className="custom-table">
             <thead>
               <tr>
-                <th>NIC</th>
                 <th>Name</th>
                 <th>Address</th>
+                <th>Type of Policy</th>
+                <th>Payment Freq.</th>
                 <th>Policy Val.</th>
                 <th>Sold By (Advisor)</th>
                 <th>Registration Date</th>
@@ -186,18 +270,19 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody>
-              {customers.length === 0 ? (
+              {filteredCustomers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No customer records accessible.
+                  <td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                    No customer records accessible or matching filters.
                   </td>
                 </tr>
               ) : (
-                customers.map(cust => (
+                filteredCustomers.map(cust => (
                   <tr key={cust._id}>
-                    <td>{cust.nic}</td>
                     <td style={{ fontWeight: '600' }}>{cust.name}</td>
                     <td>{cust.address}</td>
+                    <td>{cust.policyType || 'N/A'}</td>
+                    <td>{cust.paymentFrequency || 'N/A'}</td>
                     <td style={{ fontWeight: '600', color: 'var(--brand-aia-blue)' }}>
                       {formatLKR(cust.policyAmount)}
                     </td>
@@ -300,6 +385,45 @@ const Customers = () => {
                   min="0"
                   required 
                 />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="policyStartDate">Policy Started Date</label>
+                <input 
+                  type="date" 
+                  id="policyStartDate" 
+                  value={policyStartDate} 
+                  onChange={e => setPolicyStartDate(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="policyType">Type of Policy</label>
+                <select 
+                  id="policyType" 
+                  value={policyType} 
+                  onChange={e => setPolicyType(e.target.value)} 
+                  required
+                >
+                  <option value="Health Plan">Health Plan</option>
+                  <option value="Retirement Plan">Retirement Plan</option>
+                  <option value="Education Plan">Education Plan</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="paymentFrequency">Payment Doing</label>
+                <select 
+                  id="paymentFrequency" 
+                  value={paymentFrequency} 
+                  onChange={e => setPaymentFrequency(e.target.value)} 
+                  required
+                >
+                  <option value="Monthly">Monthly</option>
+                  <option value="Quarterly">Quarterly</option>
+                  <option value="Yearly">Yearly</option>
+                </select>
               </div>
 
               {/* Advisor Assignment Selection */}

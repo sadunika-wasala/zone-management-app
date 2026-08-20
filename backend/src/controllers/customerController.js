@@ -70,7 +70,7 @@ const getCustomerById = async (req, res) => {
 // @route   POST /api/customers
 // @access  Private
 const createCustomer = async (req, res) => {
-  const { nic, name, address, policyAmount, assignedAdvisor } = req.body;
+  const { nic, name, address, policyAmount, policyStartDate, policyType, paymentFrequency, assignedAdvisor } = req.body;
 
   try {
     // Check if customer with this NIC already exists
@@ -101,8 +101,14 @@ const createCustomer = async (req, res) => {
       name,
       address,
       policyAmount,
+      policyStartDate,
+      policyType,
+      paymentFrequency,
       assignedAdvisor: advisorId,
     });
+
+    console.log('[CREATE Customer] Received fields:', { policyStartDate, policyType, paymentFrequency });
+    console.log('[CREATE Customer] Saved document:', JSON.stringify(customer.toObject(), null, 2));
 
     const populatedCustomer = await Customer.findById(customer._id)
       .populate('assignedAdvisor', 'name email position');
@@ -117,7 +123,7 @@ const createCustomer = async (req, res) => {
 // @route   PUT /api/customers/:id
 // @access  Private
 const updateCustomer = async (req, res) => {
-  const { nic, name, address, policyAmount, assignedAdvisor } = req.body;
+  const { nic, name, address, policyAmount, policyStartDate, policyType, paymentFrequency, assignedAdvisor } = req.body;
 
   try {
     const customer = await Customer.findById(req.params.id);
@@ -141,6 +147,9 @@ const updateCustomer = async (req, res) => {
     customer.nic = nic || customer.nic;
     customer.address = address || customer.address;
     customer.policyAmount = policyAmount !== undefined ? policyAmount : customer.policyAmount;
+    customer.policyStartDate = policyStartDate || customer.policyStartDate;
+    customer.policyType = policyType || customer.policyType;
+    customer.paymentFrequency = paymentFrequency || customer.paymentFrequency;
 
     // Handle changing assigned advisor if user is not advisor
     if (req.user.position !== 'Advisor' && assignedAdvisor) {
@@ -151,9 +160,18 @@ const updateCustomer = async (req, res) => {
       customer.assignedAdvisor = assignedAdvisor;
     }
 
+    console.log('[UPDATE Customer] Incoming fields:', { policyStartDate, policyType, paymentFrequency });
+    console.log('[UPDATE Customer] Fields being set:', { 
+      policyStartDate: customer.policyStartDate, 
+      policyType: customer.policyType, 
+      paymentFrequency: customer.paymentFrequency 
+    });
+
     const updatedCustomer = await customer.save();
     const populatedCustomer = await Customer.findById(updatedCustomer._id)
       .populate('assignedAdvisor', 'name email position');
+
+    console.log('[UPDATE Customer] Saved document:', JSON.stringify(updatedCustomer.toObject(), null, 2));
 
     res.json(populatedCustomer);
   } catch (error) {

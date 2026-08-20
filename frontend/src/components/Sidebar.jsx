@@ -28,8 +28,8 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
       <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-logo" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <ShieldAlert size={28} color="#e11b22" />
-            <span className="logo-text">AIA Zonal</span>
+            <img src="/aia-logo-white-on-red.png" alt="AIA Logo" style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
+            <span className="logo-text">AIA Cluster 4 Zone</span>
           </div>
           <button className="btn-icon mobile-only" onClick={closeSidebar} style={{ color: 'var(--text-primary)', background: 'transparent', border: 'none' }}>
             <X size={24} />
