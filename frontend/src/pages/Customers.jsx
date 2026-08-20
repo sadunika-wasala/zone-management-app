@@ -190,7 +190,7 @@ const Customers = () => {
       matchPayment = cust.paymentFrequency === filterPaymentFrequency;
     }
     if (filterRegistrationMonth) {
-      const custDate = new Date(cust.createdAt);
+      const custDate = new Date(cust.policyStartDate);
       const custMonthStr = `${custDate.getFullYear()}-${String(custDate.getMonth() + 1).padStart(2, '0')}`;
       matchMonth = custMonthStr === filterRegistrationMonth;
     }
@@ -265,7 +265,7 @@ const Customers = () => {
                 <th>Payment Freq.</th>
                 <th>Policy Val.</th>
                 <th>Sold By (Advisor)</th>
-                <th>Registration Date</th>
+                <th>Policy Start Date</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -294,7 +294,7 @@ const Customers = () => {
                         </div>
                       </div>
                     </td>
-                    <td>{new Date(cust.createdAt).toLocaleDateString()}</td>
+                    <td>{new Date(cust.policyStartDate).toLocaleDateString()}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button 
