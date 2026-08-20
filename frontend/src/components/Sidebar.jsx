@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import aiaLogoSvg from '../assets/aia-logo.svg'; // Adjust path based on where you saved aia-logo.svg
 import { 
   LayoutDashboard, 
   Users, 
@@ -28,7 +29,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
       <aside className={`sidebar glass-panel ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-logo" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <img src="/zone-management-app/frontend/public/aia-logo-white-on-red.png" alt="AIA Logo" style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
+            <img src={aiaLogoSvg} alt="AIA Logo" style={{ width: '28px', height: '28px', borderRadius: '50%' }} />
             <span className="logo-text">AIA Cluster 4 Zone</span>
           </div>
           <button className="btn-icon mobile-only" onClick={closeSidebar} style={{ color: 'var(--text-primary)', background: 'transparent', border: 'none' }}>
