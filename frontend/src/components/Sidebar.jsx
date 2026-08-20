@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import aiaLogoSvg from '../assets/aia-logo.svg'; // Adjust path based on where you saved aia-logo.svg
+import aiaLogoSvg from '../assets/aialogo.svg'; // Adjust path based on where you saved aia-logo.svg
 import { 
   LayoutDashboard, 
   Users, 
