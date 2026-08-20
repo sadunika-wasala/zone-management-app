@@ -6,7 +6,7 @@ import { API_BASE_URL } from '../api'; // Adjust relative import path if needed
 const Customers = () => {
   const { user, isZonalManager } = useAuth();
   const [customers, setCustomers] = useState([]);
-  const [advisors, setAdvisors] = useState([]);
+  const [advisors, setEmployeeListUnderUser] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,6 +30,11 @@ const Customers = () => {
   const [filterPolicyType, setFilterPolicyType] = useState('');
   const [filterPaymentFrequency, setFilterPaymentFrequency] = useState('');
   const [filterRegistrationMonth, setFilterRegistrationMonth] = useState('');
+  const [filterOwnerAgent, setFilterOwnerAgent] = useState('');
+
+  //Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const headers = {
     'Authorization': `Bearer ${user.token}`,
@@ -46,17 +51,44 @@ const Customers = () => {
       }
 
       // Fetch advisors for dropdown selection (only needed for managers/leaders)
-      if (user.position !== 'Advisor') {
+      
+        console.error('user.position ', user.position);
         const empRes = await fetch(`${API_BASE_URL}/api/employees`, { headers });
         const empData = await empRes.json();
+        console.error('usempData ', empData);
         if (empRes.ok) {
-          // Filter only active advisors
-          const activeAdvisors = empData.filter(
-            e => e.position === 'Advisor' && e.status === 'Active'
-          );
-          setAdvisors(activeAdvisors);
+          if(user.position == 'Zonal Manager'){
+            setEmployeeListUnderUser(empData);
+          }
+          
+          if (user.position === 'Branch Manager') {
+            const activeMembers = empData.filter(e => {
+              // Check if e.manager is populated object OR a direct string ID
+              const managerId = e.manager?._id || e.manager;
+              return managerId === user._id && e.status === 'Active';
+            });
+          
+            console.log('activeMembers ', activeMembers);
+          
+            const isUserIncluded = activeMembers.some(e => e._id === user._id);
+            setEmployeeListUnderUser(isUserIncluded ? activeMembers : [user, ...activeMembers]);
+          }
+
+          if (user.position === 'Unit Leader') {
+            const activeMembers = empData.filter(e => {
+              // Check if e.manager is populated object OR a direct string ID
+              const leaderId = e.leader?._id || e.leader;
+              return leaderId === user._id && e.status === 'Active';
+            });
+            const isUserIncluded = activeMembers.some(e => e._id === user._id);
+            
+            setEmployeeListUnderUser(isUserIncluded ? activeMembers : [user, ...activeMembers]);
+          }
+
+          if (user.position === 'Advisor') {
+            setEmployeeListUnderUser([user]);
+          }
         }
-      }
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -68,6 +100,11 @@ const Customers = () => {
     fetchData();
   }, [user]);
 
+  // Reset to page 1 whenever any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterPolicyType, filterPaymentFrequency, filterRegistrationMonth, filterOwnerAgent]);
+
   const openCreateModal = () => {
     setEditingCustomer(null);
     setNic('');
@@ -77,7 +114,7 @@ const Customers = () => {
     setPolicyStartDate(new Date().toISOString().split('T')[0]);
     setPolicyType('Health Plan');
     setPaymentFrequency('Monthly');
-    setAssignedAdvisor(user.position === 'Advisor' ? user._id : '');
+    setAssignedAdvisor('');
     setError('');
     setSuccess('');
     setModalOpen(true);
@@ -174,14 +211,16 @@ const Customers = () => {
     return new Intl.NumberFormat('en-LK', {
       style: 'currency',
       currency: 'LKR',
-      maximumFractionDigits: 0,
+      maximumFractionDigits: 2, // Changed from 0 to 2 to show cents
     }).format(amount);
   };
 
+  
   const filteredCustomers = customers.filter(cust => {
     let matchType = true;
     let matchPayment = true;
     let matchMonth = true;
+    let matchAgent = true;
 
     if (filterPolicyType) {
       matchType = cust.policyType === filterPolicyType;
@@ -194,23 +233,77 @@ const Customers = () => {
       const custMonthStr = `${custDate.getFullYear()}-${String(custDate.getMonth() + 1).padStart(2, '0')}`;
       matchMonth = custMonthStr === filterRegistrationMonth;
     }
-    return matchType && matchPayment && matchMonth;
+    if (filterOwnerAgent) {
+      console.error('filterOwnerAgent ', filterOwnerAgent);
+      matchAgent = cust.assignedAdvisor._id === filterOwnerAgent;
+      console.error('matchAgent ', matchAgent);
+      console.error('cust ', cust);
+      console.error('cust.assignedAdvisor ', cust.assignedAdvisor);
+    }
+    return matchType && matchPayment && matchMonth && matchAgent;
   });
+
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentCustomers = filteredCustomers.slice(indexOfFirstItem, indexOfLastItem);
+
+  // Calculate total policy valuation for filtered customers
+const totalPolicyValuation = filteredCustomers.reduce(
+  (sum, cust) => sum + (Number(cust.policyAmount) || 0), 
+  0
+);
 
   return (
     <div>
-      <div className="header-action">
-        <div className="page-header" style={{ marginBottom: 0 }}>
-          <h1>Customers</h1>
-          <p>Register and view customer policy details sold by the team.</p>
-        </div>
-        <button className="btn btn-primary" onClick={openCreateModal}>
-          <Plus size={18} />
-          <span>New Customer</span>
-        </button>
-      </div>
+      <div className="header-action" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+  <div className="page-header" style={{ marginBottom: 0 }}>
+    <h1>Customers</h1>
+    <p>Register and view customer policy details sold by the team.</p>
+  </div>
+  
+  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+    {/* Total Valuation Tag */}
+    <div 
+      className="glass-panel" 
+      style={{ 
+        padding: '0.5rem 1rem', 
+        borderRadius: '8px', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'flex-end',
+        border: '1px solid rgba(255, 255, 255, 0.15)'
+      }}
+    >
+      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        Total Policy Value
+      </span>
+      <strong style={{ fontSize: '1.1rem', color: 'var(--brand-aia-blue)' }}>
+        {formatLKR(totalPolicyValuation)}
+      </strong>
+    </div>
+
+    {/* New Customer Button */}
+    <button className="btn btn-primary" onClick={openCreateModal}>
+      <Plus size={16} />
+      <span>New Customer</span>
+    </button>
+  </div>
+</div>
 
       <div className="filters-container glass-panel" style={{ display: 'flex', gap: '1rem', padding: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Agent who sold the policy:</label>
+          <select value={filterOwnerAgent} onChange={e => setFilterOwnerAgent(e.target.value)} style={{ padding: '0.4rem', borderRadius: '4px', minWidth: '150px' }}>
+          <option value="">All Agents</option>
+            {advisors.map(agent => (
+              <option key={agent._id} value={agent._id}>
+                {agent.name} {agent._id === user._id ? '(You)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+        
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <label style={{ fontSize: '0.85rem', whiteSpace: 'nowrap' }}>Policy Type:</label>
           <select value={filterPolicyType} onChange={e => setFilterPolicyType(e.target.value)} style={{ padding: '0.4rem', borderRadius: '4px', minWidth: '150px' }}>
@@ -241,10 +334,10 @@ const Customers = () => {
           />
         </div>
 
-        {(filterPolicyType || filterPaymentFrequency || filterRegistrationMonth) && (
+        {(filterPolicyType || filterPaymentFrequency || filterRegistrationMonth || filterOwnerAgent) && (
           <button 
             className="btn btn-secondary" 
-            onClick={() => { setFilterPolicyType(''); setFilterPaymentFrequency(''); setFilterRegistrationMonth(''); }}
+            onClick={() => { setFilterPolicyType(''); setFilterPaymentFrequency(''); setFilterRegistrationMonth(''); setFilterOwnerAgent('');}}
             style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
           >
             Clear
@@ -270,14 +363,14 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredCustomers.length === 0 ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                    No customer records accessible or matching filters.
-                  </td>
-                </tr>
+            {currentCustomers.length === 0 ? (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No customer records accessible or matching filters.
+                </td>
+              </tr>
               ) : (
-                filteredCustomers.map(cust => (
+                currentCustomers.map(cust => (
                   <tr key={cust._id}>
                     <td style={{ fontWeight: '600' }}>{cust.name}</td>
                     <td>{cust.address}</td>
@@ -320,7 +413,48 @@ const Customers = () => {
               )}
             </tbody>
           </table>
-        </div>
+        {/* Pagination Bar */}
+  {filteredCustomers.length > itemsPerPage && (
+    <div 
+      className="pagination-container" 
+      style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '1rem', 
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)' 
+      }}
+    >
+      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+        Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredCustomers.length)} of {filteredCustomers.length} entries
+      </span>
+
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <button
+          className="btn btn-secondary"
+          style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem' }}
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+        >
+          Previous
+        </button>
+
+        <span style={{ fontSize: '0.85rem', fontWeight: '600', padding: '0 0.5rem' }}>
+          {currentPage} / {totalPages}
+        </span>
+
+        <button
+          className="btn btn-secondary"
+          style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem' }}
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  )}
+</div>
       )}
 
       {/* Modal Dialog */}
@@ -383,6 +517,7 @@ const Customers = () => {
                   value={policyAmount} 
                   onChange={e => setPolicyAmount(e.target.value)} 
                   min="0"
+                  step="any"
                   required 
                 />
               </div>

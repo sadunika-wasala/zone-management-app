@@ -21,6 +21,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/zone-management-app/', 
+  // base: '/zone-management-app/', 
+  base: '/', 
   plugins: [react()],
 })
