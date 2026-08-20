@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { KeyRound, Mail, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import aiaLogoSvg from '../assets/aialogo.svg'; // Adjust path based on where you saved aia-logo.svg
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -39,7 +40,7 @@ const Login = () => {
       <div className="login-card glass-panel">
         <div className="login-header">
           <div className="login-logo">
-            <img src="/aia-logo-white-on-red.png" alt="AIA Logo" style={{ width: '48px', height: '48px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '50%' }} />
+            <img src={aiaLogoSvg} alt="AIA Logo" style={{ width: '48px', height: '48px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '50%' }} />
             AIA INSURANCE
           </div>
           <p className="login-subtitle">Cluster 4 Zone Management Dashboard</p>
