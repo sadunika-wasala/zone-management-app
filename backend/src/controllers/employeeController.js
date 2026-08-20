@@ -38,19 +38,21 @@ const getEmployeeById = async (req, res) => {
 
     // Get customer count for this employee (specifically if advisor, leader, or manager)
     let customerCount = 0;
-    if (employee.position === 'Advisor') {
-      customerCount = await Customer.countDocuments({ assignedAdvisor: employee._id });
-    } else if (employee.position === 'Unit Leader') {
-      // Advisors under this Unit Leader
-      const advisors = await Employee.find({ leader: employee._id, position: 'Advisor' });
-      const advisorIds = advisors.map(a => a._id);
-      customerCount = await Customer.countDocuments({ assignedAdvisor: { $in: advisorIds } });
-    } else if (employee.position === 'Branch Manager') {
-      // Advisors under leaders under this Branch Manager
-      const advisors = await Employee.find({ manager: employee._id, position: 'Advisor' });
-      const advisorIds = advisors.map(a => a._id);
-      customerCount = await Customer.countDocuments({ assignedAdvisor: { $in: advisorIds } });
-    }
+    customerCount = await Customer.countDocuments({ assignedAdvisor: employee._id });
+    
+    // if (employee.position === 'Advisor') {
+    //   customerCount = await Customer.countDocuments({ assignedAdvisor: employee._id });
+    // } else if (employee.position === 'Unit Leader') {
+    //   // Advisors under this Unit Leader
+    //   const advisors = await Employee.find({ leader: employee._id, position: 'Advisor' });
+    //   const advisorIds = advisors.map(a => a._id);
+    //   customerCount = await Customer.countDocuments({ assignedAdvisor: { $in: advisorIds } });
+    // } else if (employee.position === 'Branch Manager') {
+    //   // Advisors under leaders under this Branch Manager
+    //   const advisors = await Employee.find({ manager: employee._id, position: 'Advisor' });
+    //   const advisorIds = advisors.map(a => a._id);
+    //   customerCount = await Customer.countDocuments({ assignedAdvisor: { $in: advisorIds } });
+    // }
 
     res.json({
       ...employee.toObject(),
